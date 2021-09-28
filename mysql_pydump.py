@@ -43,7 +43,30 @@ class MyDump:
 
 
     def restore(self):
-        pass
+        mysql_cmd = f'echo "create database {self.mysql_db}" | \
+                    mysql -u {self.mysql_user} --password={self.mysql_pass} \
+                    -h {self.mysql_host} -P {self.mysql_port}'
+        ps = sb.Popen(mysql_cmd, shell=True, stdout=sb.PIPE, stderr=sb.PIPE)
+        ret_code = ps.wait()
+        if ret_code == 0:
+            data = ps.communicate()[0].decode('utf-8')
+            
+            mysql_cmd_2 = f'mysql -u {self.mysql_user} --password={self.mysql_pass} \
+                                -h {self.mysql_host} -P {self.mysql_port} \
+                                -D {self.mysql_db}    < {self.basedir}/dump.sql '
+            ps2 = sb.Popen(mysql_cmd_2, shell=True, stdout=sb.PIPE, stderr=sb.PIPE)
+            ret_code_2 = ps2.wait()
+            if ret_code_2 == 0:
+                sys.exit(0)
+            else:
+                data = ps.communicate()[1].decode('utf-8')
+                print(data)
+                sys.exit(1)
+
+        else:
+            data = ps.communicate()[1].decode('utf-8')
+            print(data)
+            sys.exit(1)
 
     def drop(self):
         mysql_cmd = f'echo "drop database {self.mysql_db}" | \
